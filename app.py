@@ -5,6 +5,7 @@ from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.output_parsers import StrOutputParser
 from pydantic import BaseModel, Field
 from typing import Literal
+from llm_config import render_llm_selector, build_llm
 import json
 
 # ── Page config ───────────────────────────────────────────────────────────────
@@ -189,8 +190,8 @@ EXAMPLES = [
 ]
 
 # ── LLM chains ────────────────────────────────────────────────────────────────
-def get_analysis_chain(api_key: str):
-    llm = ChatOpenAI(api_key=api_key, model="gpt-4o-mini", temperature=0.1)
+def get_analysis_chain(provider: str, model: str, api_key: str | None):
+    llm = build_llm(provider, model, api_key, temperature=0.1)
     parser = JsonOutputParser(pydantic_object=EmailAnalysis)
 
     prompt = ChatPromptTemplate.from_messages([
@@ -208,8 +209,8 @@ def get_analysis_chain(api_key: str):
     )
 
 
-def get_draft_chain(api_key: str):
-    llm = ChatOpenAI(api_key=api_key, model="gpt-4o-mini", temperature=0.6, streaming=True)
+def get_draft_chain(provider: str, model: str, api_key: str | None):
+    llm = build_llm(provider, model, api_key, temperature=0.6, streaming=True)
     prompt = ChatPromptTemplate.from_messages([
         ("system",
          "You are a professional email writer. Write a {tone} reply to the email below.\n"
@@ -250,8 +251,7 @@ with st.sidebar:
     <div class="brand-sub">AI-powered email intelligence</div>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="section-label">OpenAI API Key</div>', unsafe_allow_html=True)
-    api_key = st.text_input("key", label_visibility="collapsed", type="password", placeholder="sk-...")
+    provider, model, api_key, is_configured = render_llm_selector(default_temp=0.3)
 
     st.markdown('<div class="section-label">Try an example</div>', unsafe_allow_html=True)
     for label, body in EXAMPLES:
@@ -278,8 +278,8 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-if not api_key:
-    st.info("Enter your OpenAI API key in the sidebar to get started.")
+if not is_configured:
+    st.info("Choose a provider and enter your API key (or select Local Ollama) in the sidebar to get started.")
     st.stop()
 
 # ── Email input ───────────────────────────────────────────────────────────────
@@ -311,7 +311,7 @@ if analyze_clicked and email_text.strip():
     st.session_state.email_text = email_text
     with st.spinner("Analyzing…"):
         try:
-            chain = get_analysis_chain(api_key)
+            chain = get_analysis_chain(provider, model, api_key)
             result = chain.invoke({"email": email_text})
             st.session_state.analysis = result
             st.session_state.draft = None
@@ -401,7 +401,7 @@ if st.session_state.analysis:
             tone = custom_tone.lower()
         with col_draft:
             with st.spinner("Drafting reply…"):
-                draft_chain = get_draft_chain(api_key)
+                draft_chain = get_draft_chain(provider, model, api_key)
                 draft = draft_chain.invoke({
                     "email": st.session_state.last_processed,
                     "tone": tone,
