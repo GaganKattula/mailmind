@@ -4,7 +4,7 @@
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.30%2B-red?logo=streamlit)
 ![LangChain](https://img.shields.io/badge/LangChain-0.2%2B-green)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
-![CI](https://github.com/YOUR_USERNAME/mailmind/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/GaganKattula/mailmind/actions/workflows/ci.yml/badge.svg)
 
 Paste any business email and get instant structured intelligence: category, priority, sentiment, and a professional reply — drafted automatically and tailored to the tone of the original message.
 
@@ -66,7 +66,7 @@ Email text → LLM (structured output) → Pydantic validation → UI cards
 ### 1. Clone & install
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/mailmind.git
+git clone https://github.com/GaganKattula/mailmind.git
 cd mailmind
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
